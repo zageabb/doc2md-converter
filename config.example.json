@@ -1,0 +1,9 @@
+{
+  "folders": [
+    "/path/to/watch"
+  ],
+  "gui": true,
+  "initial": true,
+  "settle_seconds": 1.0,
+  "verbose": false
+}

@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "doc2md-watcher"
+version = "0.1.0"
+description = "Watch directory trees and create revisioned document conversions."
+requires-python = ">=3.10"
+dependencies = [
+  "openpyxl>=3.1",
+  "beautifulsoup4>=4.12",
+  "extract-msg>=0.55",
+  "odfpy>=1.4",
+  "portalocker>=3.1",
+  "pymupdf>=1.24",
+  "python-pptx>=1.0",
+  "python-docx>=1.1",
+  "PyYAML>=6.0",
+  "striprtf>=0.0.26",
+  "watchdog>=4.0",
+]
+
+[project.scripts]
+doc2md-watch = "doc2md_watcher.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
