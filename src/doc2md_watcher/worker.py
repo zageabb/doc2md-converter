@@ -9,6 +9,7 @@ from typing import Any
 
 import portalocker
 
+from .folder_links import FolderLinks
 from .revisions import RevisionManager
 
 
@@ -22,6 +23,7 @@ def conversion_worker(
 ) -> None:
     """Run conversions serially in a child process."""
     managers = {str(Path(root).resolve()): RevisionManager(Path(root)) for root in roots}
+    folder_links = {root: FolderLinks(Path(root)) for root in managers}
     while not stop_event.is_set():
         if parent_pid is not None and os.getppid() != parent_pid:
             break
@@ -42,7 +44,8 @@ def conversion_worker(
 
         try:
             _emit(events, "converting", source)
-            output = manager.process(source)
+            destination_folder = folder_links[root_text].destination_for(source)
+            output = manager.process(source, destination_folder=destination_folder)
             if output is None:
                 _emit(events, "skipped", source, message="generated or unsupported file")
             else:

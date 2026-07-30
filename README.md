@@ -58,13 +58,13 @@ python -m doc2md_watcher ~/Documents/incoming ~/Documents/other
 Show the floating status dashboard:
 
 ```bash
-python -m doc2md_watcher --gui --initial ~/Documents/incoming
+python -m doc2md_watcher --gui ~/Documents/incoming
 ```
 
 When `--gui` is used without a folder, a native folder chooser opens:
 
 ```bash
-python -m doc2md_watcher --gui --initial
+python -m doc2md_watcher --gui
 ```
 
 ## Startup configuration
@@ -76,7 +76,7 @@ On the first successful launch, the app stores its startup settings in
 {
   "folders": ["/path/to/watch"],
   "gui": true,
-  "initial": true,
+  "initial": false,
   "settle_seconds": 1.0,
   "verbose": false
 }
@@ -88,6 +88,11 @@ new configuration. Folder paths may be absolute or relative to `config.json`.
 Delete or edit the file to change the saved startup behavior.
 The machine-local `config.json` is ignored by Git; copy `config.example.json`
 when preparing a configuration manually.
+
+Existing files are not converted on first run. They are inventoried for the
+dashboard, and only changes observed after startup enter the queue. Existing
+files are converted only when `--initial` is explicitly supplied or
+`"initial": true` is deliberately set in `config.json`.
 
 The dashboard stays above other windows and shows discovered documents, pending
 jobs, files waiting to be released, active conversion, completed work, failures,
@@ -105,6 +110,22 @@ The pending queue is persisted at
 stopped while a file is queued, waiting for release, or converting, that job is
 restored automatically on the next launch. This recovery does not require
 `--initial`.
+
+## Linked DOCX and Markdown folders
+
+Folders ending in `_DOCX` and `_MD` are paired by their shared name. Leading
+numeric ordering prefixes are ignored, so these folders link automatically:
+
+```text
+02_Business_Context_DOCX
+03_Business_Context_MD
+```
+
+A changed DOCX in the first folder produces its Markdown revision in the linked
+MD folder. A changed Markdown file produces its DOCX revision in the linked
+DOCX folder. Matching nested subfolders are preserved. Previous revisions and
+their provenance manifests move to `98_archive` using the destination folder's
+relative structure. Ambiguous duplicate folder names are left unlinked.
 
 ## Governance provenance
 

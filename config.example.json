@@ -3,7 +3,7 @@
     "/path/to/watch"
   ],
   "gui": true,
-  "initial": true,
+  "initial": false,
   "settle_seconds": 1.0,
   "verbose": false
 }

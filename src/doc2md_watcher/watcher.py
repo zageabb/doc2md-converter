@@ -12,6 +12,7 @@ from typing import Any
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers.polling import PollingObserver
 
+from .folder_links import FolderLinks
 from .revisions import ARCHIVE_NAME, TARGET_EXTENSIONS, RevisionManager
 from .persistent_queue import PersistentQueue
 from .worker import conversion_worker
@@ -133,6 +134,20 @@ def watch(
             handlers.append(handler)
             observer.schedule(handler, str(manager.root), recursive=True)
             LOG.info("watching %s", manager.root)
+            links = FolderLinks(manager.root)
+            event_sink.put(
+                {
+                    "status": "folder_pairs",
+                    "root": str(manager.root),
+                    "pairs": [
+                        {"key": pair.key, "docx": str(pair.docx), "md": str(pair.md)}
+                        for pair in links.pairs
+                    ],
+                    "timestamp": time.time(),
+                }
+            )
+            for pair in links.pairs:
+                LOG.info("linked folders %s <-> %s", pair.docx, pair.md)
 
         relay.start()
         inventory = [

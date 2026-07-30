@@ -64,7 +64,7 @@ class RevisionManager:
         expected = self._generated.get(key)
         return expected is not None and expected == _fingerprint(path)
 
-    def process(self, source: Path) -> Path | None:
+    def process(self, source: Path, destination_folder: Path | None = None) -> Path | None:
         source = source.resolve()
         with self._lock:
             if not self.supports(source) or self.is_generated_unchanged(source):
@@ -72,9 +72,15 @@ class RevisionManager:
 
             target_suffix = TARGET_EXTENSIONS[source.suffix.lower()]
             logical_stem = _logical_stem(source.stem)
-            revision = self._next_revision(source.parent, logical_stem, target_suffix)
-            destination = source.parent / f"{logical_stem}_r{revision:03d}{target_suffix}"
-            self._archive_old_revisions(source.parent, logical_stem, target_suffix)
+            destination_folder = (destination_folder or source.parent).resolve()
+            try:
+                destination_folder.relative_to(self.root)
+            except ValueError as exc:
+                raise ValueError(f"destination is outside watch root: {destination_folder}") from exc
+            destination_folder.mkdir(parents=True, exist_ok=True)
+            revision = self._next_revision(destination_folder, logical_stem, target_suffix)
+            destination = destination_folder / f"{logical_stem}_r{revision:03d}{target_suffix}"
+            self._archive_old_revisions(destination_folder, logical_stem, target_suffix)
             self._atomic_convert(source, destination)
             self._write_manifest(source, destination, revision)
             self._generated[self._relative_key(destination)] = _fingerprint(destination)

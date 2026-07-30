@@ -39,6 +39,7 @@ class ConverterDashboard:
         self.failed = 0
         self.skipped = 0
         self.total_documents = 0
+        self.linked_pairs = 0
 
         self.window = tk.Tk()
         self.window.title("Document Converter")
@@ -170,6 +171,8 @@ class ConverterDashboard:
             self.known_documents.update(event.get("paths", []))
         elif status == "watching":
             self.health.configure(text="● WATCHING", fg=COLORS["completed"])
+        elif status == "folder_pairs":
+            self.linked_pairs += len(event.get("pairs", []))
         elif path:
             if path not in self.known_documents and not Path(path).name.startswith("."):
                 self.known_documents.add(path)
@@ -209,6 +212,12 @@ class ConverterDashboard:
         self.values["completed"].configure(text=str(self.completed))
         self.values["failed"].configure(text=str(self.failed))
         self.activity_label.configure(text="\n".join(self.activity) or "Waiting for files…")
+        self.folder_label.configure(
+            text=(
+                f"Watching {len(self.roots)} folder{'s' if len(self.roots) != 1 else ''}"
+                f"  •  {self.linked_pairs} linked pair{'s' if self.linked_pairs != 1 else ''}"
+            )
+        )
 
     def _start_drag(self, event: tk.Event) -> None:
         self._drag_origin = (event.x_root - self.window.winfo_x(), event.y_root - self.window.winfo_y())
