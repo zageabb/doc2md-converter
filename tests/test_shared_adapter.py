@@ -41,7 +41,11 @@ def test_enabled_adapter_invokes_shared_once(tmp_path, monkeypatch):
             try_shared_conversion(src, out)
     else:
         converters.convert(src, out)
-        assert calls == [(src, out, False)]
+        assert len(calls) == 1
+        assert calls[0][0] == src
+        assert calls[0][2] is False
+        assert calls[0][1] != out
+        assert calls[0][1].suffix == out.suffix
         assert out.read_text() == "shared output"
 
 
@@ -59,3 +63,26 @@ def test_shared_failure_does_not_fall_back(tmp_path, monkeypatch):
         with pytest.raises(ValueError, match="shared conversion failed"):
             converters.convert(source, dest)
         assert not dest.exists()
+
+
+def test_real_watcher_staging_with_shared_adapter(tmp_path, monkeypatch):
+    from doc2md_watcher.revisions import RevisionManager
+    monkeypatch.setenv("DOC2MD_USE_SHARED_CONVERSION", "1")
+    fake = types.ModuleType("shared_document_conversion")
+
+    def convert(source, destination, *, overwrite=False):
+        assert not destination.exists()
+        assert overwrite is False
+        destination.write_text("from shared library", encoding="utf-8")
+
+    fake.convert = convert
+    monkeypatch.setitem(sys.modules, "shared_document_conversion", fake)
+    input_path = tmp_path / "sample.docx"
+    from docx import Document
+    doc = Document()
+    doc.add_paragraph("hello")
+    doc.save(input_path)
+    if sys.version_info >= (3, 11):
+        output = RevisionManager(tmp_path).process(input_path)
+        assert output.read_text(encoding="utf-8") == "from shared library"
+        assert not list(tmp_path.glob(".doc2md-shared-*"))
