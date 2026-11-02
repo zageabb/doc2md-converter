@@ -172,3 +172,22 @@ and creates:
 ```text
 reports/summary_r002.md
 ```
+
+
+## Experimental shared converter (opt-in)
+
+The existing converter remains the default. To experiment with the separately
+released shared library under Python 3.11+, first install a **reviewed and pinned**
+version of `zageabb-document-conversion` (and `zageabb-office-core` for
+spreadsheet conversions) in the same environment. These packages are **not
+currently released**, so this option must not be enabled for normal operation.
+
+Set `DOC2MD_USE_SHARED_CONVERSION=1` to route only the formats supported by the
+shared package through its adapter. Other conversions continue using the legacy
+converter. Do not enable in production until the dependency and parity review
+is complete. The adapter does not silently fall back when the shared converter
+fails; conversion failures are reported by the existing worker.
+
+To roll back, unset `DOC2MD_USE_SHARED_CONVERSION`. No configuration change or
+consumer dependency is required for legacy mode. The shared converter may
+differ in document layout fidelity and CSV safety restrictions.
