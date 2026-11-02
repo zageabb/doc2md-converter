@@ -5,6 +5,7 @@ Intentionally not an installed dependency until a reviewed release is pinned.
 from __future__ import annotations
 import os
 import sys
+import tempfile
 from pathlib import Path
 
 SUPPORTED_PAIRS = frozenset({
@@ -34,5 +35,17 @@ def try_shared_conversion(source: Path, destination: Path) -> bool:
         ) from exc
     # Destination revisions are unique by the watcher's own revision manager.
     # No overwrite is enabled; a shared conversion failure is reported, not ignored.
-    convert(source, destination, overwrite=False)
+    # RevisionManager creates a temporary destination before dispatch.
+    # Use a separate vacant path for the shared no-clobber API.
+    fd, stage_name = tempfile.mkstemp(
+        prefix=".doc2md-shared-", suffix=destination.suffix, dir=destination.parent
+    )
+    os.close(fd)
+    stage = Path(stage_name)
+    stage.unlink()
+    try:
+        convert(source, stage, overwrite=False)
+        os.replace(stage, destination)
+    finally:
+        stage.unlink(missing_ok=True)
     return True
