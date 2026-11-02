@@ -322,6 +322,9 @@ def notebook_to_md(source: Path, destination: Path) -> None:
 
 
 def convert(source: Path, destination: Path) -> None:
+    from .shared_adapter import try_shared_conversion
+    if try_shared_conversion(source, destination):
+        return
     pair = (source.suffix.lower(), destination.suffix.lower())
     converters = {
         (".docx", ".md"): docx_to_md,
